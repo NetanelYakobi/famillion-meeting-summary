@@ -2,7 +2,7 @@ import streamlit as st
 import openai
 import docx
 
-# קריאת ה-API Key מתוך ה-Secrets
+# קריאת ה-API Key מתוך ה-Secrets של Streamlit
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 st.title("כלי סיכום פגישות - Famillion")
@@ -19,6 +19,7 @@ selected_processes = st.multiselect(
 )
 
 def parse_srt(srt_content):
+    """פונקציה להמרת קובץ SRT לטקסט נקי"""
     lines = srt_content.decode('utf-8').splitlines()
     parsed_text = []
     for line in lines:
@@ -44,19 +45,21 @@ if st.button("הפק סיכום פגישה"):
         st.subheader("תוכן התמלול שהועלה:")
         st.write(transcript_text)
 
-        # שליחת הטקסט ל-GPT כדי לייצר סיכום
+        # יצירת פרומפט לשליחה ל-GPT
         prompt = f"""
         סכם את הטקסט הבא בצורה מובנית וברורה, תוך שימוש בכותרות רלוונטיות:
         {transcript_text}
         """
 
-        response = openai.ChatCompletion.create(
+        # קריאה ל-OpenAI API בגרסה המעודכנת
+        response = openai.chat.completions.create(
             model="gpt-4-turbo",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3
         )
 
-        summary = response['choices'][0]['message']['content']
+        # קבלת הסיכום והצגתו
+        summary = response.choices[0].message.content
 
         st.subheader("סיכום AI:")
         st.write(summary)
