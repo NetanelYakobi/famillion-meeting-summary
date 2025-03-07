@@ -1,5 +1,9 @@
 import streamlit as st
+import openai
 import docx
+
+# קריאת ה-API Key מתוך ה-Secrets
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 st.title("כלי סיכום פגישות - Famillion")
 
@@ -8,10 +12,9 @@ st.header("העלאת קבצי מידע לפגישה")
 uploaded_transcript = st.file_uploader("העלה קובץ תמלול או סיכום פגישה", type=['txt', 'docx', 'srt'])
 uploaded_excel = st.file_uploader("העלה קובץ אקסל (מידע לקוח, מוצרים)", type=['xlsx'])
 
-st.header("בחירת תהליכים מתוך רשימה סגורה")
-
+st.header("בחירת תהליכים מובנים")
 selected_processes = st.multiselect(
-    "בחר תהליכים",
+    "בחר תהליכים מתוך הרשימה",
     ["ביטוח חיים", "ביטוח בריאות", "ביטוח סיעודי", "חיסכון פנסיוני", "השקעות", "הלוואות", "משכנתאות"]
 )
 
@@ -40,7 +43,23 @@ if st.button("הפק סיכום פגישה"):
     if transcript_text:
         st.subheader("תוכן התמלול שהועלה:")
         st.write(transcript_text)
-        st.success("כאן יוצג הסיכום לאחר פיתוח המערכת")
+
+        # שליחת הטקסט ל-GPT כדי לייצר סיכום
+        prompt = f"""
+        סכם את הטקסט הבא בצורה מובנית וברורה, תוך שימוש בכותרות רלוונטיות:
+        {transcript_text}
+        """
+
+        response = openai.ChatCompletion.create(
+            model="gpt-4-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3
+        )
+
+        summary = response['choices'][0]['message']['content']
+
+        st.subheader("סיכום AI:")
+        st.write(summary)
     else:
         st.error("הקובץ שהועלה ריק או לא תקין, אנא בדוק שוב.")
 
